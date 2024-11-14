@@ -85,7 +85,7 @@ class UserService {
   verifyUser = async (payload) => {
     try {
       const { email, verificationToken } = payload;
-      const decodedMail = decodeURIComponent(email);
+      const decodedMail = email;
       const user = await User.findOne({
         where: { email: decodedMail, verificationToken },
       });

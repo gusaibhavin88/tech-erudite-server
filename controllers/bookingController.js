@@ -7,7 +7,7 @@ const bookingService = new BookingService();
 
 // Add Booking
 exports.addBooking = catchAsyncError(async (req, res, next) => {
-  const user = await bookingService.addBooking(req?.body);
+  const user = await bookingService.addBooking(req?.body, req?.user);
   sendResponse(
     res,
     true,

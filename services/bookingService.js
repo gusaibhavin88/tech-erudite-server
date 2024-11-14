@@ -15,7 +15,7 @@ const { User, Booking } = require("../models");
 
 class BookingService {
   // User Sign up
-  addBooking = async (payload) => {
+  addBooking = async (payload, user) => {
     try {
       const {
         customerName,
@@ -30,7 +30,6 @@ class BookingService {
       } = payload;
 
       const date = new Date(bookingDate);
-
       // Check for conflicts based on booking type
       let conflict = null;
 
@@ -101,7 +100,7 @@ class BookingService {
         bookingTime,
         phone,
         address,
-        userId,
+        userId: user?.id,
       });
 
       return newBooking;
