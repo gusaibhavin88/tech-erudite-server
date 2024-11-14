@@ -30,6 +30,11 @@
     "invalidUser": "Invalid user"
   },
 
+  "booking": {
+    "created": "Booking created",
+    "alreadyBooked": "Already slot booked"
+  },
+
   "admin": {
     "adminNotFound": "Admin not found.",
     "usersFetched": "Users fetched successfully.",

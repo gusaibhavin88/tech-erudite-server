@@ -2,7 +2,7 @@ const catchAsyncErrors = require("../helpers/catchAsyncError");
 const jwt = require("jsonwebtoken");
 const { throwError } = require("../helpers/errorUtil");
 const { returnMessage } = require("../utils/utils");
-const User = require("../models");
+const { User } = require("../models");
 
 exports.protect = catchAsyncErrors(async (req, res, next) => {
   const token = req.headers.authorization || req.headers.token;
@@ -12,10 +12,9 @@ exports.protect = catchAsyncErrors(async (req, res, next) => {
       Authorization,
       process.env.JWT_User_SECRET_KEY
     );
-    const user = await User.findOne({
-      where: {
-        id: decodedUserData.id,
-      },
+    console.log(decodedUserData);
+
+    const user = await User.findByPk(decodedUserData.id, {
       attributes: { exclude: ["password"] },
       raw: true,
     });

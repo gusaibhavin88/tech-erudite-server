@@ -11,109 +11,105 @@ const statusCode = require("../messages/statusCodes.json");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const sendEmail = require("../helpers/sendEmail");
-const { User } = require("../models");
+const { User, Booking } = require("../models");
 
-class UserService {
+class BookingService {
   // User Sign up
-  signUp = async (payload) => {
+  addBooking = async (payload) => {
     try {
-      const { email, password, firstName, lastName } = payload;
+      const {
+        customerName,
+        customerEmail,
+        bookingDate,
+        bookingType,
+        bookingSlot,
+        bookingTime,
+        phone,
+        address,
+        userId,
+      } = payload;
 
-      if (!validateEmail(email)) {
-        return throwError(returnMessage("auth", "invalidEmail"));
+      const date = new Date(bookingDate);
+
+      // Check for conflicts based on booking type
+      let conflict = null;
+
+      if (bookingType === "Full Day") {
+        conflict = await Booking.findOne({
+          where: {
+            bookingDate: date,
+            bookingType: "Full Day",
+          },
+        });
+      } else if (bookingType === "Half Day") {
+        conflict = await Booking.findOne({
+          where: {
+            bookingDate: date,
+            bookingType: "Full Day",
+          },
+        });
+
+        if (!conflict) {
+          conflict = await Booking.findOne({
+            where: {
+              bookingDate: date,
+              bookingType: "Half Day",
+              bookingSlot: bookingSlot,
+            },
+          });
+        }
+      } else if (bookingType === "Custom") {
+        conflict = await Booking.findOne({
+          where: {
+            bookingDate: date,
+            bookingType: "Full Day",
+          },
+        });
+
+        if (!conflict) {
+          conflict = await Booking.findOne({
+            where: {
+              bookingDate: date,
+              bookingType: "Half Day",
+              bookingSlot: bookingSlot,
+            },
+          });
+        }
+
+        if (!conflict && bookingTime && bookingTime.startsWith("0")) {
+          conflict = await Booking.findOne({
+            where: {
+              bookingDate: date,
+              bookingType: "Half Day",
+              bookingSlot: "First Half", // Prevent First Half from being booked if morning time is chosen
+            },
+          });
+        }
       }
 
-      if (!passwordValidation(password)) {
-        return throwError(returnMessage("auth", "invalidPassword"));
+      if (conflict) {
+        return throwError(returnMessage("booking", "alreadyBooked"));
       }
 
-      const user = await User.findOne({ where: { email } });
-      console.log(user);
-      if (user) {
-        return throwError(returnMessage("auth", "emailExist"));
-      }
-      const verificationToken = crypto.randomBytes(32).toString("hex");
-      const hashPassword = await bcrypt.hash(password, 14);
-
-      let newUser = await User.create({
-        email,
-        password: hashPassword,
-        firstName,
-        lastName,
-        verificationToken,
+      // Create the booking
+      const newBooking = await Booking.create({
+        customerName,
+        customerEmail,
+        bookingDate: date,
+        bookingType,
+        bookingSlot,
+        bookingTime,
+        phone,
+        address,
+        userId,
       });
 
-      const encode = encodeURIComponent(payload?.email);
-      const link = `${process.env.REACT_APP_URL}/verify/?token=${verificationToken}&email=${encode}`;
-      const userVerifyTemplate = verifyUser(
-        link,
-        payload?.firstName + " " + payload?.lastName
-      );
-      sendEmail({
-        email,
-        subject: returnMessage("emailTemplate", "verifyUser"),
-        message: userVerifyTemplate,
-      });
-      return newUser;
+      return newBooking;
     } catch (error) {
-      logger.error(`Error while user signup: ${error}`);
-      return throwError(error?.message, error?.statusCode);
-    }
-  };
-
-  // Verify User
-  verifyUser = async (payload) => {
-    try {
-      const { email, verificationToken } = payload;
-      const decodedMail = decodeURIComponent(email);
-      const user = await User.findOne({
-        where: { email: decodedMail, verificationToken },
-      });
-      if (!user) {
-        return throwError(returnMessage("admin", "userNotFound"));
-      }
-      user.verificationToken = null;
-      user.isVerified = true;
-      user.save();
-      return;
-    } catch (error) {
-      logger.error(`Error while verification: ${error}`);
-      return throwError(error?.message, error?.statusCode);
-    }
-  };
-
-  // User Login
-  login = async (payload) => {
-    try {
-      const { email, password } = payload;
-
-      if (!validateEmail(email)) {
-        return throwError(returnMessage("auth", "invalidEmail"));
-      }
-
-      if (!passwordValidation(password)) {
-        return throwError(returnMessage("auth", "invalidPassword"));
-      }
-      console.log("jhjyh");
-
-      const user = await User.findOne({ email: email });
-      if (!user) {
-        return throwError(returnMessage("auth", "invalidUser"));
-      }
-
-      const correctPassword = await bcrypt.compare(password, user?.password);
-
-      if (!correctPassword) {
-        return throwError(returnMessage("auth", "invalidUser"));
-      }
-
-      const userData = await this.tokenGenerator(user);
-      return userData;
-    } catch (error) {
-      logger.error(`Error while  login : ${error}`);
+      logger.error(`Error while Create booking signup: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
   };
 }
 
-module.exports = UserService;
+module.exports = BookingService;

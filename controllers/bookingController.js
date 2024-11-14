@@ -5,13 +5,13 @@ const BookingService = require("../services/bookingService");
 const { sendResponse } = require("../utils/sendResponse");
 const bookingService = new BookingService();
 
-// User Sign Up
-exports.signup = catchAsyncError(async (req, res, next) => {
-  const user = await bookingService.signUp(req?.body);
+// Add Booking
+exports.addBooking = catchAsyncError(async (req, res, next) => {
+  const user = await bookingService.addBooking(req?.body);
   sendResponse(
     res,
     true,
-    returnMessage("auth", "registered"),
+    returnMessage("booking", "created"),
     user,
     statusCode.success
   );

@@ -30,6 +30,7 @@ sequelize
 const db = {};
 
 db.User = require("../models/user.model")(sequelize, DataTypes);
+db.Booking = require("../models/booking.model")(sequelize, DataTypes);
 db.UserDetail = require("../models/details.model")(sequelize, DataTypes);
 
 Object.keys(db).forEach((modelName) => {
